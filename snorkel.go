@@ -4,16 +4,19 @@ package snorkel
 import (
 	"io"
 	"log/slog"
+	"math/rand/v2"
 	"os"
 )
 
 type Logger struct {
-	logger *slog.Logger
+	slogger *slog.Logger
+	random  func() float32
 }
 
 type Options struct {
-	NoTime bool
-	W      io.Writer
+	NoTime       bool
+	RandomSource rand.Source
+	W            io.Writer
 }
 
 // New [Logger] with the given [Options].
@@ -22,7 +25,12 @@ func New(opts Options) *Logger {
 		opts.W = os.Stderr
 	}
 
-	return &Logger{logger: slog.New(slog.NewJSONHandler(opts.W, &slog.HandlerOptions{
+	random := rand.Float32
+	if opts.RandomSource != nil {
+		random = rand.New(opts.RandomSource).Float32
+	}
+
+	slogger := slog.New(slog.NewJSONHandler(opts.W, &slog.HandlerOptions{
 		ReplaceAttr: func(groups []string, a slog.Attr) slog.Attr {
 			switch a.Key {
 			case "level":
@@ -32,13 +40,25 @@ func New(opts Options) *Logger {
 					return slog.Attr{}
 				}
 				return a
+			case "msg":
+				a.Key = "name"
+				return a
 			default:
 				return a
 			}
 		},
-	}))}
+	}))
+
+	return &Logger{
+		slogger: slogger,
+		random:  random,
+	}
 }
 
-func (l *Logger) Log(msg string, args ...any) {
-	l.logger.Info(msg, args...)
+// Log an event with the given name, sample rate, and arguments.
+func (l *Logger) Log(name string, rate float32, args ...any) {
+	if rate <= l.random() {
+		return
+	}
+	l.slogger.Info(name, args...)
 }
