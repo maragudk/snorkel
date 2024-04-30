@@ -15,7 +15,7 @@ func TestLogger_Log(t *testing.T) {
 	t.Run("logs a message without level", func(t *testing.T) {
 		l, b := newL()
 		l.Log("Yo", 1, "foo", "bar")
-		equal(t, `{"name":"Yo","foo":"bar"}`, b)
+		is.True(t, strings.Contains(b.String(), `"name":"Yo","rate":1,"foo":"bar"`))
 	})
 
 	t.Run("logs message depending on sample rate", func(t *testing.T) {
@@ -33,12 +33,22 @@ func TestLogger_Log(t *testing.T) {
 		for _, test := range tests {
 			t.Run(fmt.Sprint(test.Rate), func(t *testing.T) {
 				l, b := newL()
+				var messageCount, messageLength int
+
+				// If the rate is non-zero, try until there's a message in the log
+				for test.Rate > 0 && messageLength == 0 {
+					l.Log("Yo", test.Rate)
+					messageLength = len(b.String())
+				}
+
+				l, b = newL()
 				for range 10000 {
 					l.Log("Yo", test.Rate)
 				}
 
-				messageLength := len(`{"name":"Yo"}` + "\n")
-				messageCount := len(b.String()) / messageLength
+				if messageLength > 0 {
+					messageCount = len(b.String()) / messageLength
+				}
 				is.Equal(t, test.Count, messageCount)
 			})
 		}
@@ -52,14 +62,4 @@ func newL() (*snorkel.Logger, *strings.Builder) {
 		RandomSource: rand.NewPCG(1, 2),
 		W:            &b,
 	}), &b
-}
-
-func equal(t *testing.T, expected string, actual fmt.Stringer) {
-	t.Helper()
-
-	if expected != "" {
-		expected += "\n"
-	}
-
-	is.Equal(t, expected, actual.String())
 }
