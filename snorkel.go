@@ -6,11 +6,14 @@ import (
 	"log/slog"
 	"math/rand/v2"
 	"os"
+	"runtime"
+	"runtime/debug"
 )
 
 type Logger struct {
-	slogger *slog.Logger
+	groups  []slog.Attr
 	random  func() float32
+	slogger *slog.Logger
 }
 
 type Options struct {
@@ -49,9 +52,25 @@ func New(opts Options) *Logger {
 		},
 	}))
 
+	var groups []slog.Attr
+
+	if bi, ok := debug.ReadBuildInfo(); ok {
+		groups = append(groups, slog.Group("build",
+			"goVersion", bi.GoVersion,
+			"goOS", runtime.GOOS,
+			"goArch", runtime.GOARCH,
+			"path", bi.Main.Path,
+			"version", bi.Main.Version,
+			"sum", bi.Main.Sum,
+		))
+	}
+
+	groups = append(groups, slog.Group("runtime"))
+
 	return &Logger{
-		slogger: slogger,
+		groups:  groups,
 		random:  random,
+		slogger: slogger,
 	}
 }
 
@@ -60,5 +79,14 @@ func (l *Logger) Log(name string, rate float32, args ...any) {
 	if rate <= l.random() {
 		return
 	}
-	l.slogger.Info(name, args...)
+
+	var allArgs []any
+	allArgs = append(allArgs, "rate", rate)
+
+	allArgs = append(allArgs, args...)
+
+	for _, g := range l.groups {
+		allArgs = append(allArgs, g)
+	}
+	l.slogger.Info(name, allArgs...)
 }
