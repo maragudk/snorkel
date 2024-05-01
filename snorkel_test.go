@@ -11,10 +11,15 @@ import (
 	"github.com/maragudk/snorkel"
 )
 
-func TestLogger_Log(t *testing.T) {
+func ExampleLogger() {
+	log := snorkel.New(snorkel.Options{})
+	log.Event("Yo", 1, "env", "sparkly")
+}
+
+func TestLogger_Event(t *testing.T) {
 	t.Run("logs a message without level", func(t *testing.T) {
 		l, b := newL()
-		l.Log("Yo", 1, "foo", "bar")
+		l.Event("Yo", 1, "foo", "bar")
 		is.True(t, strings.Contains(b.String(), `"name":"Yo","rate":1,"foo":"bar"`))
 	})
 
@@ -37,13 +42,13 @@ func TestLogger_Log(t *testing.T) {
 
 				// If the rate is non-zero, try until there's a message in the log
 				for test.Rate > 0 && messageLength == 0 {
-					l.Log("Yo", test.Rate)
+					l.Event("Yo", test.Rate)
 					messageLength = len(b.String())
 				}
 
 				l, b = newL()
 				for range 10000 {
-					l.Log("Yo", test.Rate)
+					l.Event("Yo", test.Rate)
 				}
 
 				if messageLength > 0 {

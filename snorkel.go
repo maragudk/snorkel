@@ -74,8 +74,8 @@ func New(opts Options) *Logger {
 	}
 }
 
-// Log an event with the given name, sample rate, and arguments.
-func (l *Logger) Log(name string, rate float32, args ...any) {
+// Event to log with the given name, sample rate, and arguments.
+func (l *Logger) Event(name string, rate float32, args ...any) {
 	if rate <= l.random() {
 		return
 	}
