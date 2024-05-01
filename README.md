@@ -9,6 +9,12 @@
 
 Made in 🇩🇰 by [maragu](https://www.maragu.dk/), maker of [online Go courses](https://www.golang.dk/).
 
+## Features
+
+- Simple logger with just a single method, `Event`, which logs named events with a given sample rate.
+- Sane defaults log to STD_ERR and include event name, sample rate, time, and build info. More to come.
+- No external dependencies.
+
 ## Usage
 
 ```go
