@@ -6,9 +6,9 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/maragudk/is"
+	"maragu.dev/is"
 
-	"github.com/maragudk/snorkel"
+	"maragu.dev/snorkel"
 )
 
 func ExampleLogger() {
