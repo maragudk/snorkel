@@ -1,5 +1,5 @@
-module github.com/maragudk/snorkel
+module maragu.dev/snorkel
 
 go 1.22
 
-require github.com/maragudk/is v0.1.0
+require maragu.dev/is v0.2.0
