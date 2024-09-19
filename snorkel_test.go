@@ -2,6 +2,7 @@ package snorkel_test
 
 import (
 	"fmt"
+	"io"
 	"math/rand/v2"
 	"strings"
 	"testing"
@@ -57,6 +58,14 @@ func TestLogger_Event(t *testing.T) {
 				is.Equal(t, test.Count, messageCount)
 			})
 		}
+	})
+
+	t.Run("does not log if it's a discard logger", func(t *testing.T) {
+		l := snorkel.New(snorkel.Options{W: io.Discard})
+		l.Event("Yo", 1, "foo", "bar")
+
+		l = snorkel.NewDiscard()
+		l.Event("Yo", 1, "foo", "bar")
 	})
 }
 

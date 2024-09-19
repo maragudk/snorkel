@@ -11,6 +11,7 @@ import (
 )
 
 type Logger struct {
+	discard bool
 	groups  []slog.Attr
 	random  func() float32
 	slogger *slog.Logger
@@ -24,6 +25,10 @@ type Options struct {
 
 // New [Logger] with the given [Options].
 func New(opts Options) *Logger {
+	if opts.W == io.Discard {
+		return NewDiscard()
+	}
+
 	if opts.W == nil {
 		opts.W = os.Stderr
 	}
@@ -76,6 +81,10 @@ func New(opts Options) *Logger {
 
 // Event to log with the given name, sample rate, and arguments.
 func (l *Logger) Event(name string, rate float32, args ...any) {
+	if l.discard {
+		return
+	}
+
 	if rate <= l.random() {
 		return
 	}
@@ -89,4 +98,8 @@ func (l *Logger) Event(name string, rate float32, args ...any) {
 		allArgs = append(allArgs, g)
 	}
 	l.slogger.Info(name, allArgs...)
+}
+
+func NewDiscard() *Logger {
+	return &Logger{discard: true}
 }
